@@ -10,8 +10,10 @@ testConversion("utf8-property", {encoding: "utf8"});
 
 function testConversion(name, options) {
   tape("shapefile.openDbf(" + name + ")", function(test) {
+    var featureCount
     shapefile.openDbf("test/" + name + ".dbf", options)
       .then(source => {
+        featureCount = source.featureCount
         var values = [];
         return source.read().then(function read(result) {
           if (result.done) return values;
@@ -20,7 +22,11 @@ function testConversion(name, options) {
           return source.read().then(read);
         });
       })
-      .then(values => (test.deepEqual(values, JSON.parse(fs.readFileSync("test/" + name + ".json", "utf8")).features.map(properties)), test.end()))
+      .then(values => {
+        test.ok(featureCount === values.length, 'matching feature count length')
+        test.deepEqual(values, JSON.parse(fs.readFileSync("test/" + name + ".json", "utf8")).features.map(properties))
+        test.end()
+      })
       .catch(error => test.end(error));
   });
 }
